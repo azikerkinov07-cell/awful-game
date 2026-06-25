@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>STEP CHAOS GAME FIXED</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Comic Sans MS, cursive;
+    overflow: hidden;
+}
+
+/* тряска экрана */
+@keyframes shake {
+    0% {transform: translate(0, 0);}
+    25% {transform: translate(2px, -2px);}
+    50% {transform: translate(-2px, 2px);}
+    75% {transform: translate(2px, 2px);}
+    100% {transform: translate(-2px, -2px);}
+}
+
+#screen {
+    animation: shake 0.12s infinite;
+}
+
+h1 {
+    text-align: center;
+    background: yellow;
+    margin: 0;
+    padding: 10px;
+}
+
+#hud {
+    display: flex;
+    justify-content: space-around;
+    font-size: 20px;
+    padding: 5px;
+}
+
+#game {
+    width: 100%;
+    height: 400px;
+    background: black;
+    position: relative;
+    overflow: hidden;
+}
+
+#player {
+    width: 40px;
+    height: 40px;
+    background: red;
+    position: absolute;
+    top: 200px;
+    left: 200px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.enemy {
+    width: 30px;
+    height: 30px;
+    background: cyan;
+    position: absolute;
+}
+
+#flag {
+    width: 30px;
+    height: 30px;
+    background: gold;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    text-align: center;
+    font-size: 20px;
+}
+
+button {
+    display: block;
+    margin: 10px auto;
+    font-size: 20px;
+}
+
+#restartBtn {
+    display: none;
+    font-size: 25px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="screen">
+
+<h1>💀 STEP CHAOS GAME 💀</h1>
+
+<div id="hud">
+    <div id="hp">HP: 100</div>
+    <div id="score">Score: 0</div>
+</div>
+
+<button onclick="startGame()">START</button>
+<button id="restartBtn" onclick="restartGame()">RESTART</button>
+
+<div id="game">
+    <div id="player">YOU</div>
+    <div id="flag">🏁</div>
+</div>
+
+</div>
+
+<script>
+let player = document.getElementById("player");
+let game = document.getElementById("game");
+let hpText = document.getElementById("hp");
+let scoreText = document.getElementById("score");
+let restartBtn = document.getElementById("restartBtn");
+
+let x = 200;
+let y = 200;
+
+let hp = 100;
+let score = 0;
+
+let enemies = [];
+let started = false;
+let gameOver = false;
+
+/* === ВАЖНО: фикс "одно нажатие = один шаг" === */
+let lock = false;
+
+document.addEventListener("keydown", (e) => {
+    if (!started || gameOver) return;
+    if (lock) return;
+
+    lock = true;
+
+    let step = 10;
+
+    if (e.key === "ArrowUp") y -= step;
+    if (e.key === "ArrowDown") y += step;
+    if (e.key === "ArrowLeft") x -= step;
+    if (e.key === "ArrowRight") x += step;
+
+    x = Math.max(0, Math.min(window.innerWidth - 40, x));
+    y = Math.max(0, Math.min(400 - 40, y));
+
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+
+    checkFlag();
+});
+
+document.addEventListener("keyup", () => {
+    lock = false;
+});
+
+/* враги */
+function spawnEnemy() {
+    let e = document.createElement("div");
+    e.className = "enemy";
+
+    e.style.left = Math.random() * window.innerWidth + "px";
+    e.style.top = Math.random() * 400 + "px";
+
+    game.appendChild(e);
+    enemies.push(e);
+}
+
+/* фон */
+function changeBackground() {
+    document.body.style.background =
+        "#" + Math.floor(Math.random()*16777215).toString(16);
+}
+
+/* флаг */
+function checkFlag() {
+    let px = player.offsetLeft;
+    let py = player.offsetTop;
+
+    let fx = flag.offsetLeft;
+    let fy = flag.offsetTop;
+
+    if (Math.abs(px - fx) < 30 && Math.abs(py - fy) < 30) {
+        winGame();
+    }
+}
+
+/* победа */
+function winGame() {
+    gameOver = true;
+    restartBtn.style.display = "block";
+    alert("🏆 YOU WIN!");
+}
+
+/* смерть */
+function loseGame() {
+    gameOver = true;
+    restartBtn.style.display = "block";
+    alert("💀 YOU DIED");
+}
+
+/* старт */
+function startGame() {
+    if (started) return;
+    started = true;
+
+    setInterval(() => {
+        if (gameOver) return;
+
+        spawnEnemy();
+        changeBackground();
+
+        enemies.forEach(e => {
+            let top = parseFloat(e.style.top);
+            let left = parseFloat(e.style.left);
+
+            e.style.top = top + (Math.random() * 6 - 3) + "px";
+            e.style.left = left + (Math.random() * 6 - 3) + "px";
+
+            let px = player.offsetLeft;
+            let py = player.offsetTop;
+
+            if (Math.abs(px - left) < 30 && Math.abs(py - top) < 30) {
+                hp -= 15;
+                hpText.innerText = "HP: " + hp;
+
+                if (hp <= 0) loseGame();
+            }
+        });
+
+        score++;
+        scoreText.innerText = "Score: " + score;
+
+    }, 200);
+}
+
+/* рестарт */
+function restartGame() {
+    location.reload();
+}
+</script>
+
+</body>
+</html>
